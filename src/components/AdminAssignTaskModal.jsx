@@ -254,9 +254,13 @@ export default function AdminAssignTaskModal({
                     districtFilter === 'all' ||
                     districts.length === 0 ||
                     districts.some((d) => d.toLowerCase() === districtFilter.toLowerCase());
+                  const phoneTail = String(ins.phone || '')
+                    .replace(/\D/g, '')
+                    .slice(-10);
                   return (
                     <option key={ins.id} value={ins.id}>
                       {ins.full_name}
+                      {phoneTail ? ` · ${phoneTail}` : ''}
                       {districts.length ? ` · ${districts.join('/')}` : ''}
                       {!inDistrict && districtFilter !== 'all' ? ' (other district)' : ''}
                     </option>

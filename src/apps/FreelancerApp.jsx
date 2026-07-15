@@ -55,11 +55,14 @@ function FreelancerAppInner() {
     const onStorage = (e) => {
       if (e.key === 'siteverify_projects' || e.key === 'siteverify_inspector_profiles') reload();
     };
+    const onFocus = () => reload();
     window.addEventListener('storage', onStorage);
     window.addEventListener('siteverify-projects-updated', reload);
+    window.addEventListener('focus', onFocus);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('siteverify-projects-updated', reload);
+      window.removeEventListener('focus', onFocus);
     };
   }, [user, profile]);
 

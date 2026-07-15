@@ -23,7 +23,7 @@ function AdminAppInner() {
       ]);
       setProjects(data.map(normalizeProjectStages));
 
-      // Demo fallback if Supabase returned no inspector profiles
+      // Use live inspectors only; one demo fallback when none exist yet
       const list =
         inspectorList?.length > 0
           ? inspectorList

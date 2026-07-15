@@ -320,12 +320,15 @@ export function getDutyProgressLabel(project) {
 }
 
 export function splitInspectorProjects(projects, inspectorId, inspectorName) {
-  const mine = (projects || []).filter(
-    (p) =>
-      (inspectorId && p.inspectorId === inspectorId) ||
-      p.inspector === inspectorName ||
-      p.assignedInspector === inspectorName
-  );
+  const mine = (projects || []).filter((p) => {
+    if (inspectorId && p.inspectorId) return p.inspectorId === inspectorId;
+    if (inspectorId && p.assignment?.inspectorId) return p.assignment.inspectorId === inspectorId;
+    // Name fallback only when ids are missing (legacy local rows)
+    if (!p.inspectorId && inspectorName) {
+      return p.inspector === inspectorName || p.assignedInspector === inspectorName;
+    }
+    return false;
+  });
   return {
     active: mine.filter(isInspectorDutyActive),
     past: mine

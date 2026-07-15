@@ -129,7 +129,56 @@ export async function getProfile(userId) {
   return data;
 }
 
+/** Collapse duplicate inspector rows (same phone / same name from repeated OTP signups). */
+function dedupeInspectors(list) {
+  const byPhone = new Map();
+  const byName = new Map();
+
+  (list || []).forEach((ins) => {
+    const phone = String(ins.phone || '')
+      .replace(/\D/g, '')
+      .slice(-10);
+    if (phone.length === 10) {
+      const prev = byPhone.get(phone);
+      if (!prev || new Date(ins.created_at || 0) >= new Date(prev.created_at || 0)) {
+        byPhone.set(phone, ins);
+      }
+      return;
+    }
+    const key = String(ins.full_name || '')
+      .trim()
+      .toLowerCase();
+    if (!key) return;
+    const prev = byName.get(key);
+    if (!prev || new Date(ins.created_at || 0) >= new Date(prev.created_at || 0)) {
+      byName.set(key, ins);
+    }
+  });
+
+  return [...byPhone.values(), ...byName.values()].sort((a, b) =>
+    String(a.full_name || '').localeCompare(String(b.full_name || ''))
+  );
+}
+
 export async function getInspectors() {
+  // Prefer live Supabase profiles whenever configured (real OTP inspectors).
+  // Demo list only when bypassing auth or Supabase is unavailable.
+  if (isSupabaseConfigured && supabase && !isDemoBypassActive()) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, phone, created_at')
+        .eq('role', ROLES.INSPECTOR)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      const live = dedupeInspectors(data || []);
+      if (live.length > 0) return live;
+    } catch (e) {
+      console.warn('[SiteVerify] getInspectors via Supabase failed:', e.message);
+    }
+  }
+
   if (isDemoBypassActive() || isDemoMode()) {
     return [
       {
@@ -138,25 +187,10 @@ export async function getInspectors() {
         email: null,
         phone: `+91${DEMO_ACCOUNTS.inspector.phone}`,
       },
-      {
-        id: 'demo-user-inspector-002',
-        full_name: 'Biju Varghese',
-        email: null,
-        phone: '+919876543212',
-      },
     ];
   }
 
-  if (!supabase) return [];
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, phone')
-    .eq('role', ROLES.INSPECTOR)
-    .order('full_name');
-
-  if (error) throw error;
-  return data || [];
+  return [];
 }
 
 export function isAuthConfigured() {

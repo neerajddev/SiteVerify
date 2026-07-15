@@ -51,7 +51,7 @@ function saveToLocalStorage(projects) {
 }
 
 function mapRowToProject(row) {
-  const project = { ...row.data };
+  const project = { ...(row.data || {}) };
   project.id = row.id;
   project.homeownerName = row.homeowner_name;
   project.homeowner = row.homeowner_name;
@@ -65,25 +65,36 @@ function mapRowToProject(row) {
   project.blueprintName = row.blueprint_file;
   project.totalProgress = row.total_progress;
   project.currentPhase = row.current_phase;
-  project.ownerId = row.owner_id;
-  project.inspectorId = row.inspector_id;
+  // Prefer columns; fall back to JSON so assignment isn't lost if a column write lagged
+  project.ownerId = row.owner_id || project.ownerId || null;
+  project.inspectorId = row.inspector_id || project.inspectorId || null;
   return project;
 }
 
-function projectToRow(project, ownerId) {
+function projectToRow(project, fallbackOwnerId) {
+  const ownerId = project.ownerId || fallbackOwnerId || null;
+  const inspectorId = project.inspectorId || null;
+  // Keep JSON in sync with columns — inspector portal filters on these fields
+  const data = {
+    ...project,
+    ownerId,
+    inspectorId,
+    inspector: project.assignedInspector || project.inspector || 'Pending Assignment',
+    assignedInspector: project.assignedInspector || project.inspector || 'Pending Assignment',
+  };
   return {
     id: project.id,
     homeowner_name: project.homeownerName || project.homeowner || 'Unknown',
-    assigned_inspector: project.assignedInspector || project.inspector || 'Pending Assignment',
+    assigned_inspector: data.assignedInspector,
     location: project.location || 'Unknown',
     project_status: project.projectStatus || project.status || 'Pending Assignment',
     foundation_type: project.foundationType || 'cf',
     blueprint_file: project.blueprintFile || project.blueprintName || '',
     total_progress: project.totalProgress || 0,
     current_phase: project.currentPhase || '',
-    owner_id: project.ownerId || ownerId || null,
-    inspector_id: project.inspectorId || null,
-    data: project,
+    owner_id: ownerId,
+    inspector_id: inspectorId,
+    data,
     updated_at: new Date().toISOString(),
   };
 }
@@ -118,7 +129,9 @@ export async function saveProject(project) {
   if (!useLocalProjectStore()) {
     try {
       const userId = await getCurrentUserId();
-      const row = projectToRow(project, userId);
+      // Never overwrite an existing homeowner ownerId with the admin's auth uid
+      const fallbackOwner = project.ownerId ? null : userId;
+      const row = projectToRow(project, fallbackOwner);
 
       const { error } = await supabase.from('projects').upsert(row, { onConflict: 'id' });
       if (error) throw error;
