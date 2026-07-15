@@ -17,15 +17,36 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone TEXT;
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
+-- Helper first (used by RLS — never query profiles inside a profiles policy directly)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS TEXT
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT role FROM public.profiles WHERE id = auth.uid();
+$$;
+
 DROP POLICY IF EXISTS "Users read own profile" ON profiles;
 CREATE POLICY "Users read own profile" ON profiles
   FOR SELECT USING (auth.uid() = id);
 
 DROP POLICY IF EXISTS "Admins read all profiles" ON profiles;
 CREATE POLICY "Admins read all profiles" ON profiles
-  FOR SELECT USING (
-    EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
-  );
+  FOR SELECT USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Users insert own profile" ON profiles;
 CREATE POLICY "Users insert own profile" ON profiles
@@ -34,6 +55,7 @@ CREATE POLICY "Users insert own profile" ON profiles
   );
 
 -- Auto-create profile when user signs up (fixes RLS error on signup)
+-- Dashboard "Add user" defaults to homeowner — promote admins with UPDATE (see below).
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -44,7 +66,8 @@ DECLARE
   user_role TEXT;
 BEGIN
   user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'homeowner');
-  IF user_role NOT IN ('homeowner', 'inspector') THEN
+  -- Allow admin only when explicitly set in user metadata (or promote via SQL later)
+  IF user_role NOT IN ('homeowner', 'inspector', 'admin') THEN
     user_role := 'homeowner';
   END IF;
 
@@ -55,7 +78,8 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     user_role,
     NEW.phone
-  );
+  )
+  ON CONFLICT (id) DO NOTHING;
 
   RETURN NEW;
 END;
@@ -94,29 +118,6 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES auth.user
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS inspector_id UUID REFERENCES auth.users(id);
 
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
-
--- ── Helper functions ─────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS BOOLEAN
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-  );
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_my_role()
-RETURNS TEXT
-LANGUAGE sql
-SECURITY DEFINER
-STABLE
-SET search_path = public
-AS $$
-  SELECT role FROM public.profiles WHERE id = auth.uid();
-$$;
 
 -- ── Remove old public prototype policies ─────────────────────────────────────
 DROP POLICY IF EXISTS "Allow public read access" ON projects;

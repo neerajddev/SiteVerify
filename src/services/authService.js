@@ -17,7 +17,11 @@ export function formatPhoneIndian(digits) {
 }
 
 export async function sendPhoneOtp({ phone, fullName, role }) {
-  if (!supabase) throw new Error('Supabase is not configured');
+  if (!supabase) {
+    throw new Error(
+      'Supabase is not configured. Restart the app (npm run dev) so .env loads, or use Enter demo while testing.'
+    );
+  }
 
   const { data, error } = await supabase.auth.signInWithOtp({
     phone,
@@ -45,10 +49,25 @@ export async function verifyPhoneOtp({ phone, token }) {
 }
 
 export async function signIn({ email, password }) {
-  if (!supabase) throw new Error('Supabase is not configured');
+  if (!supabase) {
+    throw new Error(
+      'Supabase is not configured. Restart the app (npm run dev) so .env loads, or use Enter demo while testing.'
+    );
+  }
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
+  if (error) {
+    const msg = error.message || '';
+    if (/email not confirmed/i.test(msg)) {
+      throw new Error(
+        'Email confirmation is still required in Supabase. Turn off Confirm email (Auth → Providers → Email), or mark this user as confirmed.'
+      );
+    }
+    if (/invalid login credentials/i.test(msg)) {
+      throw new Error('Wrong email or password');
+    }
+    throw error;
+  }
   return data;
 }
 

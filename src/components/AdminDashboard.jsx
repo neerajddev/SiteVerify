@@ -12,6 +12,7 @@ import AdminAssignTaskModal from './AdminAssignTaskModal';
 import AdminKnowledgeBase from './AdminKnowledgeBase';
 import AdminProjectDetail from './AdminProjectDetail';
 import AdminReviewQueue from './AdminReviewQueue';
+import AdminChatInbox from './AdminChatInbox';
 import {
   getProjectTestStats,
   getInspectorWorkload,
@@ -371,6 +372,7 @@ export default function AdminDashboard({
           {[
             { id: 'overview', label: 'Dashboard' },
             { id: 'review', label: `Review${workflowStats.submitted ? ` (${workflowStats.submitted})` : ''}` },
+            { id: 'chat', label: 'Chat' },
             { id: 'projects', label: 'All projects' },
             { id: 'inspectors', label: 'Inspector status' },
             { id: 'knowledge', label: 'Knowledge' },
@@ -623,6 +625,13 @@ export default function AdminDashboard({
             onSendBack={async (projectId, stageId, subStageId, testId, extras) => {
               await handleSendBackTest(projectId, stageId, subStageId, testId, extras);
             }}
+          />
+        )}
+
+        {!detailProject && adminSection === 'chat' && (
+          <AdminChatInbox
+            projects={projects}
+            currentUser={currentUser || { role: 'admin', full_name: 'Admin' }}
           />
         )}
 

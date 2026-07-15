@@ -275,8 +275,9 @@ function PhoneOtpAuth({ config, accent, onAuthenticated, onDemoLogin, portal }) 
 
       {step === 'phone' && (
         <form onSubmit={handleSendOtp} className="space-y-4">
-          <p className="text-xs text-slate-500 text-center -mt-2 mb-2">
-            OTP only needed once. You stay logged in after that.
+          <p className={`text-xs text-center -mt-2 mb-2 leading-relaxed ${light ? 'text-slate-500' : 'text-slate-400'}`}>
+            We’ll send a 6-digit code by <span className={light ? 'text-[#085041] font-semibold' : 'text-slate-200 font-semibold'}>phone call or SMS</span>.
+            Needed once — you stay logged in after that.
           </p>
 
           <div>
@@ -325,16 +326,25 @@ function PhoneOtpAuth({ config, accent, onAuthenticated, onDemoLogin, portal }) 
               disabled={loading}
               className={btnClass}
             >
-              {loading ? 'Sending…' : 'Send OTP'}
+              {loading ? 'Sending…' : 'Get OTP'}
             </button>
           </form>
       )}
 
       {step === 'otp' && (
         <form onSubmit={handleVerifyOtp} className="space-y-5">
-          <p className={`text-center text-xs ${light ? 'text-slate-500' : 'text-slate-400'}`}>
-            OTP sent to <span className={`font-bold ${light ? 'text-[#085041]' : 'text-slate-200'}`}>+91 {phone}</span>
-          </p>
+          <div className="text-center space-y-1.5">
+            <p className={`text-xs ${light ? 'text-slate-500' : 'text-slate-400'}`}>
+              Code sent to <span className={`font-bold ${light ? 'text-[#085041]' : 'text-slate-200'}`}>+91 {phone}</span>
+            </p>
+            <p className={`text-[12px] leading-relaxed ${light ? 'text-slate-600' : 'text-slate-300'}`}>
+              Check for a <strong className={light ? 'text-[#085041]' : 'text-white'}>phone call</strong> or{' '}
+              <strong className={light ? 'text-[#085041]' : 'text-white'}>SMS</strong> with your 6-digit OTP.
+            </p>
+            <p className={`text-[11px] ${light ? 'text-slate-400' : 'text-slate-500'}`}>
+              Answer the call if it rings — the code is spoken to you.
+            </p>
+          </div>
           {isDemoMode() && instantDemo && (
             <p className="text-center text-[10px] text-teal-400/90 font-medium">
               OTP not working? Use <strong>Enter demo</strong> above.
@@ -371,7 +381,7 @@ function PhoneOtpAuth({ config, accent, onAuthenticated, onDemoLogin, portal }) 
               onClick={handleSendOtp}
               className="text-slate-500 hover:text-slate-300 disabled:opacity-40"
             >
-              {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend OTP'}
+              {resendIn > 0 ? `Resend in ${resendIn}s` : 'Resend code'}
             </button>
           </div>
         </form>
@@ -416,6 +426,9 @@ function AdminPasswordAuth({ accent, onAuthenticated, onDemoLogin }) {
       {isDemoMode() && (
         <DemoHint portal="admin" instant={canUseDemoBypass()} onUseDemo={applyDemo} />
       )}
+      <p className="text-xs text-slate-400 mb-4 text-center">
+        Email and password only — no email verification step.
+      </p>
       <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
@@ -424,6 +437,8 @@ function AdminPasswordAuth({ accent, onAuthenticated, onDemoLogin }) {
         <input
           type="email"
           required
+          autoComplete="username"
+          placeholder="admin@siteverify.in"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className={`w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 ${accent.ring}`}
@@ -436,6 +451,7 @@ function AdminPasswordAuth({ accent, onAuthenticated, onDemoLogin }) {
         <input
           type="password"
           required
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className={`w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 ${accent.ring}`}
@@ -467,6 +483,19 @@ export default function PortalAuth({ portal, onAuthenticated, onDemoLogin, userR
       <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
         <div className="max-w-sm w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-4">
           <h1 className="text-lg font-black text-white">Wrong account</h1>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            You signed in, but this account is <span className="text-white font-bold">{userRole}</span>, not{' '}
+            <span className="text-white font-bold">{config.role}</span>.
+            {portal === 'admin' && (
+              <>
+                {' '}
+                In Supabase SQL Editor run:
+                <code className="block mt-3 text-left text-[11px] bg-slate-950 border border-slate-700 rounded-lg p-3 text-teal-300 overflow-x-auto">
+                  {`UPDATE profiles SET role = 'admin'\nWHERE email = 'YOUR_EMAIL';`}
+                </code>
+              </>
+            )}
+          </p>
           <button
             onClick={onSignOut}
             className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-colors"
@@ -497,13 +526,16 @@ export default function PortalAuth({ portal, onAuthenticated, onDemoLogin, userR
               <p className="text-[12px] font-medium text-[#1D9E75] uppercase tracking-widest">SiteVerify</p>
               <h1 className="text-[22px] font-medium text-[#085041] mt-2">Your home. Verified.</h1>
               <p className="text-[14px] text-slate-500 mt-2 leading-[1.6]">
-                Sign in with your phone. No password to remember.
+                Sign in with your phone. OTP by call or SMS — no password.
               </p>
             </>
           ) : (
             <>
               <span className="text-4xl">{config.icon}</span>
               <h1 className="text-xl font-black text-white mt-3">{config.title}</h1>
+              <p className="text-sm text-slate-400 mt-2 leading-relaxed">
+                Sign in with your phone. OTP by call or SMS.
+              </p>
             </>
           )}
         </div>

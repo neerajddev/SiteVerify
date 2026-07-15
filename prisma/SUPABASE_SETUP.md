@@ -50,10 +50,22 @@ Creates:
 | Homeowner + Inspector | Authentication → Providers → **Phone** → ON |
 | Admin | Authentication → Providers → **Email** → ON |
 
+### Admin email login (no verification email)
+
+Admins use **email + password** only (see `admin.html`). Turn off confirm-email so they can log in immediately:
+
+1. Authentication → Providers → **Email** → ON  
+2. **Confirm email** → **OFF** (admins must not wait for a verify link)  
+3. Save
+
+Only admins use email auth in this app; homeowners/inspectors use phone OTP, so this is safe.
+
 **Optional (free testing, no SMS cost):**  
 Authentication → Phone → Test phone numbers  
 - `+919876543210` → OTP `123456` (homeowner)  
 - `+919876543211` → OTP `123456` (inspector)
+
+**Real SMS to any Indian number (testers):** use 2Factor.in — see `prisma/TWOFACTOR_SMS_SETUP.md`.
 
 ---
 
@@ -62,7 +74,8 @@ Authentication → Phone → Test phone numbers
 1. Authentication → Users → **Add user**
 2. Email: `admin@siteverify.in`
 3. Password: `Demo@12345`
-4. Auto-confirm: **ON**
+4. **Auto Confirm User** → **ON** (skip email verification for this account)
+5. Save
 
 Then run in SQL Editor (`prisma/demo-setup.sql` step 4):
 
@@ -70,6 +83,8 @@ Then run in SQL Editor (`prisma/demo-setup.sql` step 4):
 UPDATE profiles SET role = 'admin', full_name = 'Site Admin'
 WHERE email = 'admin@siteverify.in';
 ```
+
+If login says “Email not confirmed”, either re-enable Auto Confirm when creating the user, or in Users → open the user → confirm them manually (and keep Confirm email OFF for future admins).
 
 ---
 

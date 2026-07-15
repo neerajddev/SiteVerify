@@ -60,12 +60,10 @@ export default function AdminAssignTaskModal({
     project.inspectorId || current.inspectorId || ''
   );
   const [districtFilter, setDistrictFilter] = useState(projectDistrict || 'all');
-  const defaultVisit = current.visitCodes?.[0] || nextEligible || '';
-  const [scope, setScope] = useState(
-    current.scope === 'tests' || current.scope === 'full' ? current.scope : 'visit'
-  );
+  const defaultVisit = current.visitCodes?.[0] || nextEligible || '1A';
+  const [scope, setScope] = useState('visit');
   const [visitCodes, setVisitCodes] = useState(
-    current.visitCodes?.length ? current.visitCodes : defaultVisit ? [defaultVisit] : []
+    current.visitCodes?.length ? current.visitCodes : defaultVisit ? [defaultVisit] : ['1A']
   );
   const [testIds, setTestIds] = useState(current.testIds || []);
   const [visitDate, setVisitDate] = useState(
@@ -89,10 +87,31 @@ export default function AdminAssignTaskModal({
 
   const filteredInspectors = useMemo(() => {
     if (districtFilter === 'all') return inspectors;
+    const match = [];
+    const other = [];
+    inspectors.forEach((ins) => {
+      const districts = inspectorDistricts(ins, projects);
+      if (
+        districts.length === 0 ||
+        districts.some((d) => d.toLowerCase() === districtFilter.toLowerCase())
+      ) {
+        match.push(ins);
+      } else {
+        other.push(ins);
+      }
+    });
+    // Always keep others available — district is a preference, not a hard lock
+    return [...match, ...other];
+  }, [inspectors, projects, districtFilter]);
+
+  const inspectorsInDistrict = useMemo(() => {
+    if (districtFilter === 'all') return inspectors;
     return inspectors.filter((ins) => {
       const districts = inspectorDistricts(ins, projects);
-      if (districts.length === 0) return true;
-      return districts.some((d) => d.toLowerCase() === districtFilter.toLowerCase());
+      return (
+        districts.length === 0 ||
+        districts.some((d) => d.toLowerCase() === districtFilter.toLowerCase())
+      );
     });
   }, [inspectors, projects, districtFilter]);
 
@@ -128,7 +147,9 @@ export default function AdminAssignTaskModal({
     foundationType:
       constructionType === 'rr_load_bearing' || constructionType === 'laterite'
         ? 'rr'
-        : project.foundationType,
+        : constructionType
+          ? 'cf'
+          : project.foundationType,
     plinthBeamType,
   };
   const rrNaTests = getRrNaTestNumbers(previewProject);
@@ -137,12 +158,12 @@ export default function AdminAssignTaskModal({
     scope !== 'visit' ||
     (visitCodes.length === 1 && isVisitAssignable(project, visitCodes[0]));
 
+  const typeRequired = !typeLocked;
   const canSubmit =
     inspectorId &&
+    (!typeRequired || Boolean(constructionType)) &&
     visitOk &&
-    ((scope === 'visit' && visitCodes.length > 0) ||
-      (scope === 'tests' && testIds.length > 0) ||
-      scope === 'full') &&
+    ((scope === 'visit' && visitCodes.length > 0) || (scope === 'tests' && testIds.length > 0)) &&
     (!needsPourDate || (visitDate && pourDateConfirmed));
 
   const handleSubmit = async (e) => {
@@ -190,6 +211,13 @@ export default function AdminAssignTaskModal({
             {nextEligible ? ` (next: Visit ${nextEligible})` : ' — all visits approved'}.
             One visit per site day.
           </div>
+          {selectedVisit && scope === 'visit' && (
+            <div className="mt-2 bg-[#E1F5EE] border border-[#1D9E75]/30 rounded-lg px-3 py-2 text-[13px] text-[#085041] leading-[1.6]">
+              <strong>{selectedVisit.visitLabel}</strong> · {selectedVisit.name} · Stage:{' '}
+              {selectedVisit.stageName} · Tests T{selectedVisit.testNumbers.join(', T')}
+              <span className="block text-[12px] mt-1 text-[#085041]/80">{selectedVisit.timing}</span>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
@@ -222,33 +250,48 @@ export default function AdminAssignTaskModal({
                 <option value="">Select inspector</option>
                 {filteredInspectors.map((ins) => {
                   const districts = inspectorDistricts(ins, projects);
+                  const inDistrict =
+                    districtFilter === 'all' ||
+                    districts.length === 0 ||
+                    districts.some((d) => d.toLowerCase() === districtFilter.toLowerCase());
                   return (
                     <option key={ins.id} value={ins.id}>
                       {ins.full_name}
                       {districts.length ? ` · ${districts.join('/')}` : ''}
+                      {!inDistrict && districtFilter !== 'all' ? ' (other district)' : ''}
                     </option>
                   );
                 })}
               </select>
+              {districtFilter !== 'all' && inspectorsInDistrict.length === 0 && (
+                <p className="text-[12px] text-amber-800 mt-1.5">
+                  No inspector tagged for {districtFilter} yet — other inspectors are still listed. Assign whoever can travel, or set district to All.
+                </p>
+              )}
             </div>
           </div>
 
           <div>
             <label className="block text-[12px] font-medium text-slate-400 uppercase tracking-wider mb-1.5">
-              Kerala construction type
-              {typeLocked ? ' (locked)' : ''}
+              Kerala construction type {typeRequired ? '*' : '(locked)'}
             </label>
             <select
               value={constructionType}
               onChange={(e) => setConstructionType(e.target.value)}
               disabled={typeLocked}
+              required={typeRequired}
               className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1D9E75]/40 disabled:bg-slate-50 disabled:text-slate-500"
             >
-              <option value="">Not set</option>
+              <option value="">Select build type…</option>
               {KERALA_CONSTRUCTION_TYPES.map((t, i) => (
                 <option key={t.id} value={t.id}>Type {i + 1}: {t.shortName}</option>
               ))}
             </select>
+            {!typeLocked && (
+              <p className="text-[12px] text-slate-500 mt-1 leading-[1.5]">
+                Set once at first visit. RR / Laterite auto-marks steel tests N/A. RCC / modern square keeps all tests.
+              </p>
+            )}
             {typeLocked && (
               <p className="text-[12px] text-slate-400 mt-1">Cannot change after first visit assignment.</p>
             )}
@@ -335,9 +378,8 @@ export default function AdminAssignTaskModal({
             </label>
             <div className="space-y-2">
               {[
-                { value: 'visit', label: 'One visit (required)', hint: '1A–4B — sequence locked' },
-                { value: 'tests', label: 'Specific tests only', hint: 'Re-check / exception' },
-                { value: 'full', label: 'All open tests', hint: 'Avoid — windows differ by visit' },
+                { value: 'visit', label: 'One visit (required)', hint: '1A–4B — sequence locked · one visit per day' },
+                { value: 'tests', label: 'Specific tests only', hint: 'Exception: send-back re-check only' },
               ].map((opt) => (
                 <label key={opt.value} className="flex items-start gap-3 px-4 py-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
                   <input

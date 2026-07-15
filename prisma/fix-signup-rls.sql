@@ -1,4 +1,4 @@
--- Run in Supabase SQL Editor (updates profile trigger for phone OTP users)
+-- Run in Supabase SQL Editor (updates profile trigger for phone OTP / dashboard users)
 
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS phone TEXT;
 
@@ -12,7 +12,7 @@ DECLARE
   user_role TEXT;
 BEGIN
   user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'homeowner');
-  IF user_role NOT IN ('homeowner', 'inspector') THEN
+  IF user_role NOT IN ('homeowner', 'inspector', 'admin') THEN
     user_role := 'homeowner';
   END IF;
 
@@ -23,7 +23,8 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     user_role,
     NEW.phone
-  );
+  )
+  ON CONFLICT (id) DO NOTHING;
 
   RETURN NEW;
 END;

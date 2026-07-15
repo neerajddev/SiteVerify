@@ -258,3 +258,63 @@ export function enableSupabaseChatIfAvailable() {
     tablesMissing = false;
   }
 }
+
+/**
+ * Inbox list for admin — one row per project, Google Chat style.
+ * Merges known threads + all projects so every site appears.
+ */
+export async function listProjectChatInbox(projects = []) {
+  enableSupabaseChatIfAvailable();
+  const byProject = new Map();
+
+  if (!preferLocal()) {
+    try {
+      const { data, error } = await supabase
+        .from('project_chats')
+        .select('*')
+        .order('last_message_at', { ascending: false, nullsFirst: false });
+      if (error) throw error;
+      (data || []).forEach((row) => {
+        byProject.set(row.project_id, mapChat(row));
+      });
+    } catch (e) {
+      const msg = e?.message || String(e);
+      if (/relation .* does not exist|Could not find the table/i.test(msg)) {
+        tablesMissing = true;
+      }
+      useLocal = true;
+    }
+  }
+
+  if (preferLocal()) {
+    const store = loadLocal();
+    Object.values(store.threads || {}).forEach((t) => {
+      byProject.set(t.projectId, t);
+    });
+  }
+
+  const rows = (projects || []).map((p) => {
+    const thread = byProject.get(p.id);
+    const siteName = p.projectName || `${p.homeownerName || p.homeowner || 'Project'}'s House`;
+    return {
+      projectId: p.id,
+      project: p,
+      siteName,
+      homeowner: p.homeownerName || p.homeowner || 'Homeowner',
+      location: p.location || '',
+      lastMessageAt: thread?.lastMessageAt || thread?.updatedAt || null,
+      lastMessagePreview: thread?.lastMessagePreview || 'Start a conversation',
+      hasMessages: Boolean(thread?.lastMessageAt || thread?.lastMessagePreview),
+      chatId: thread?.id || `chat_${p.id}`,
+    };
+  });
+
+  rows.sort((a, b) => {
+    const ta = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+    const tb = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+    if (tb !== ta) return tb - ta;
+    return a.siteName.localeCompare(b.siteName);
+  });
+
+  return rows;
+}

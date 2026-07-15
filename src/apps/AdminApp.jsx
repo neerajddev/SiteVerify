@@ -9,7 +9,7 @@ import { DEMO_USER_IDS } from '../services/demoAuthService';
 import { DEMO_ACCOUNTS } from '../data/demoAccounts';
 
 function AdminAppInner() {
-  const { user, profile, signOut, completeLogin, demoLogin, loading: authLoading } = useAuth();
+  const { user, profile, session, signOut, completeLogin, demoLogin, loading: authLoading } = useAuth();
   const [projects, setProjects] = useState([]);
   const [inspectors, setInspectors] = useState([]);
   const [activeProjectId, setActiveProjectId] = useState('');
@@ -81,6 +81,48 @@ function AdminAppInner() {
   }
 
   if (!user || !profile) {
+    // Auth succeeded but no profiles row (schema/trigger missing) — explain instead of silent loop
+    if (session?.user && !profile) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+          <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 space-y-4 text-center">
+            <h1 className="text-lg font-black text-white">Profile missing</h1>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Login worked, but the app cannot read your row in <code className="text-teal-300">profiles</code>.
+              In Supabase SQL Editor, run the checks below, then click <strong className="text-white">Reload profile</strong>.
+            </p>
+            <code className="block text-left text-[11px] bg-slate-950 border border-slate-700 rounded-lg p-3 text-teal-300 overflow-x-auto whitespace-pre-wrap">
+              {`-- 1) Confirm auth user exists
+SELECT id, email FROM auth.users WHERE email = 'admin1@siteverify.com';
+
+-- 2) Create / promote admin profile
+INSERT INTO public.profiles (id, email, full_name, role)
+SELECT id, email, 'Site Admin', 'admin'
+FROM auth.users
+WHERE email = 'admin1@siteverify.com'
+ON CONFLICT (id) DO UPDATE SET role = 'admin', email = EXCLUDED.email;
+
+-- 3) Must return role = admin
+SELECT id, email, role FROM public.profiles WHERE email = 'admin1@siteverify.com';`}
+            </code>
+            <button
+              type="button"
+              onClick={() => completeLogin()}
+              className="w-full py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-slate-900 text-sm font-black"
+            >
+              Reload profile
+            </button>
+            <button
+              type="button"
+              onClick={signOut}
+              className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <PortalAuth
         portal="admin"
