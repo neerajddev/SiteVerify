@@ -485,7 +485,7 @@ export default function PortalAuth({ portal, onAuthenticated, onDemoLogin, userR
 
   if (userRole && userRole !== config.role) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+      <div className="min-h-full flex-1 flex items-center justify-center bg-slate-950 px-4">
         <div className="max-w-sm w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-4">
           <h1 className="text-lg font-black text-white">Wrong account</h1>
           <p className="text-sm text-slate-400 leading-relaxed">
@@ -514,7 +514,7 @@ export default function PortalAuth({ portal, onAuthenticated, onDemoLogin, userR
 
   return (
     <div
-      className={`min-h-screen flex items-center justify-center px-4 ${
+      className={`min-h-full flex-1 flex items-center justify-center px-4 ${
         portal === 'homeowner' ? 'bg-[#F8F8F6]' : 'bg-slate-950'
       }`}
     >

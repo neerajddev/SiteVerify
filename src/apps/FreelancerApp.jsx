@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FreelancerDashboard from '../components/FreelancerDashboard';
 import PortalAuth from '../components/PortalAuth';
+import PhoneAppShell from '../components/PhoneAppShell';
 import { useAuth } from '../contexts/AuthContext';
 import { getProjects, saveProject } from '../services/projectService';
 import {
@@ -68,29 +69,35 @@ function FreelancerAppInner() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800">
-        <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-amber-500 animate-spin" />
-      </div>
+      <PhoneAppShell portal="inspector" accent="amber" showInstallBanner={false}>
+        <div className="flex flex-1 flex-col items-center justify-center text-slate-800 py-20">
+          <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-amber-500 animate-spin" />
+        </div>
+      </PhoneAppShell>
     );
   }
 
   if (!user || !profile) {
     return (
-      <PortalAuth
-        portal="inspector"
-        onAuthenticated={completeLogin}
-        onDemoLogin={demoLogin}
-      />
+      <PhoneAppShell portal="inspector" accent="amber" showInstallBanner={false}>
+        <PortalAuth
+          portal="inspector"
+          onAuthenticated={completeLogin}
+          onDemoLogin={demoLogin}
+        />
+      </PhoneAppShell>
     );
   }
 
   if (profile?.role !== 'inspector') {
     return (
-      <PortalAuth
-        portal="inspector"
-        userRole={profile?.role}
-        onSignOut={signOut}
-      />
+      <PhoneAppShell portal="inspector" accent="amber" showInstallBanner={false}>
+        <PortalAuth
+          portal="inspector"
+          userRole={profile?.role}
+          onSignOut={signOut}
+        />
+      </PhoneAppShell>
     );
   }
 
@@ -115,27 +122,27 @@ function FreelancerAppInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-amber-500 animate-spin" />
-      </div>
+      <PhoneAppShell portal="inspector" accent="amber">
+        <div className="flex flex-1 items-center justify-center py-20">
+          <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-amber-500 animate-spin" />
+        </div>
+      </PhoneAppShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
-      <main className="flex-1">
-        <FreelancerDashboard
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onSelectActiveProject={handleSelectActiveProject}
-          onUpdateProjects={handleUpdateProjects}
-          inspectorProfile={profile}
-          inspectorExtendedProfile={inspectorExtendedProfile}
-          onSaveInspectorProfile={handleSaveInspectorProfile}
-          onSignOut={signOut}
-        />
-      </main>
-    </div>
+    <PhoneAppShell portal="inspector" accent="amber">
+      <FreelancerDashboard
+        projects={projects}
+        activeProjectId={activeProjectId}
+        onSelectActiveProject={handleSelectActiveProject}
+        onUpdateProjects={handleUpdateProjects}
+        inspectorProfile={profile}
+        inspectorExtendedProfile={inspectorExtendedProfile}
+        onSaveInspectorProfile={handleSaveInspectorProfile}
+        onSignOut={signOut}
+      />
+    </PhoneAppShell>
   );
 }
 

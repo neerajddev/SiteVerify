@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import HomeownerDashboard from '../components/HomeownerDashboard';
 import PortalAuth from '../components/PortalAuth';
+import PhoneAppShell from '../components/PhoneAppShell';
 import { useAuth } from '../contexts/AuthContext';
 import { getProjects, saveProject, seedDemoProjectIfNeeded, normalizeProjectStages } from '../services/projectService';
 import { isDemoMode } from '../data/demoAccounts';
@@ -67,29 +68,35 @@ function HomeownerAppInner() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800">
-        <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-teal-500 animate-spin" />
-      </div>
+      <PhoneAppShell portal="homeowner" accent="teal" showInstallBanner={false}>
+        <div className="flex flex-1 flex-col items-center justify-center text-slate-800 py-20">
+          <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-teal-500 animate-spin" />
+        </div>
+      </PhoneAppShell>
     );
   }
 
   if (!user || !profile) {
     return (
-      <PortalAuth
-        portal="homeowner"
-        onAuthenticated={completeLogin}
-        onDemoLogin={demoLogin}
-      />
+      <PhoneAppShell portal="homeowner" accent="teal" showInstallBanner={false}>
+        <PortalAuth
+          portal="homeowner"
+          onAuthenticated={completeLogin}
+          onDemoLogin={demoLogin}
+        />
+      </PhoneAppShell>
     );
   }
 
   if (profile?.role !== 'homeowner') {
     return (
-      <PortalAuth
-        portal="homeowner"
-        userRole={profile?.role}
-        onSignOut={signOut}
-      />
+      <PhoneAppShell portal="homeowner" accent="teal" showInstallBanner={false}>
+        <PortalAuth
+          portal="homeowner"
+          userRole={profile?.role}
+          onSignOut={signOut}
+        />
+      </PhoneAppShell>
     );
   }
 
@@ -118,29 +125,29 @@ function HomeownerAppInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-teal-500 animate-spin" />
-      </div>
+      <PhoneAppShell portal="homeowner" accent="teal">
+        <div className="flex flex-1 items-center justify-center py-20">
+          <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-teal-500 animate-spin" />
+        </div>
+      </PhoneAppShell>
     );
   }
 
   const activeProject = projects.find((p) => p.id === activeProjectId) || projects[0] || null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <main className="flex-1">
-        <HomeownerDashboard
-          projectReport={activeProject}
-          onAddProject={handleAddProject}
-          onUpdateProjects={handleUpdateProjects}
-          projects={projects}
-          userProfile={profile}
-          activeProjectId={activeProjectId}
-          onSelectProject={handleSelectActiveProject}
-          onLogout={signOut}
-        />
-      </main>
-    </div>
+    <PhoneAppShell portal="homeowner" accent="teal">
+      <HomeownerDashboard
+        projectReport={activeProject}
+        onAddProject={handleAddProject}
+        onUpdateProjects={handleUpdateProjects}
+        projects={projects}
+        userProfile={profile}
+        activeProjectId={activeProjectId}
+        onSelectProject={handleSelectActiveProject}
+        onLogout={signOut}
+      />
+    </PhoneAppShell>
   );
 }
 

@@ -331,35 +331,6 @@ export default function HomeownerDashboard({
   const [contactMessage, setContactMessage] = useState('');
   const [clientPhone, setClientPhone] = useState('');
 
-  // PWA installation states
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [showInstallBanner, setShowInstallBanner] = useState(true);
-
-  // Monitor PWA installation
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
-
-  const handleInstallApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setIsInstalled(true);
-        setDeferredPrompt(null);
-      }
-    } else {
-      setIsInstalled(true);
-      alert('📱 Thank you! SiteVerify has been added to your Home Screen.');
-    }
-  };
-
   const handleDownloadPDF = () => {
     setPdfGenerating(true);
     setTimeout(() => {
@@ -488,8 +459,8 @@ export default function HomeownerDashboard({
   });
 
   return (
-    <div className="min-h-screen blueprint-grid py-4 px-4 md:px-6 relative">
-      <div className="max-w-md mx-auto pb-12">
+    <div className="min-h-[100dvh] blueprint-grid py-3 px-3 md:px-4 relative">
+      <div className="w-full mx-auto pb-10">
         {/* ── HOME VIEW ──────────────────────────────────────────────────────── */}
         {view === 'home' && (
           <div className="space-y-5 animate-fadeIn">
@@ -528,29 +499,6 @@ export default function HomeownerDashboard({
               </button>
               </div>
             </div>
-
-            {/* PWA Banner */}
-            {showInstallBanner && !isInstalled && (
-              <div className="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-2xl p-4 shadow-lg border border-slate-700 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-safety-500/20 text-safety-500 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-sm text-slate-100 leading-tight">Add to Home Screen</h4>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Quick access & offline reports.</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={handleInstallApp}
-                  className="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-[11px] font-black px-3.5 py-2 rounded-xl transition-all shadow-md shadow-brand-500/20 whitespace-nowrap cursor-pointer"
-                >
-                  Install App
-                </button>
-              </div>
-            )}
 
             {projectReport ? (
               <>

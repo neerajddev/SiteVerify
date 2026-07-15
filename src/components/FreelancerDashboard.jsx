@@ -566,8 +566,8 @@ export default function FreelancerDashboard({
       activeTest?.workflowStatus === WORKFLOW_STATUS.REVISION_REQUESTED);
 
   return (
-    <div className="min-h-screen blueprint-grid bg-slate-50 text-slate-800 py-4 px-4 relative">
-      <div className="max-w-md mx-auto pb-12">
+    <div className="min-h-[100dvh] blueprint-grid bg-slate-50 text-slate-800 py-3 px-3 relative">
+      <div className="w-full mx-auto pb-10">
 
         {view === 'settings' && extendedProfile && (
           <InspectorSettings
