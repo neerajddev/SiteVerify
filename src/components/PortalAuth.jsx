@@ -196,8 +196,13 @@ function PhoneOtpAuth({ config, accent, onAuthenticated, onDemoLogin, portal }) 
     }
     setLoading(true);
     try {
-      await verifyPhoneOtp({ phone: e164, token: otp });
-      await onAuthenticated?.();
+      const data = await verifyPhoneOtp({ phone: e164, token: otp });
+      await onAuthenticated?.({
+        session: data?.session || null,
+        role: config.role,
+        fullName: fullName.trim(),
+        phone: e164,
+      });
     } catch (err) {
       setError(err.message || 'Invalid OTP');
     } finally {
@@ -412,8 +417,8 @@ function AdminPasswordAuth({ accent, onAuthenticated, onDemoLogin }) {
     setError('');
     setLoading(true);
     try {
-      await signIn({ email: email.trim(), password });
-      await onAuthenticated?.();
+      const data = await signIn({ email: email.trim(), password });
+      await onAuthenticated?.({ session: data?.session || null, role: 'admin' });
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {

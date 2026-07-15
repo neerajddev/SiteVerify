@@ -642,7 +642,7 @@ export default function HomeownerDashboard({
                     Add your construction site
                   </h2>
                   <p className="text-[14px] text-slate-500 mt-2 leading-[1.6] max-w-sm mx-auto">
-                    Upload your structural drawing and site details. SiteVerify will then assign an independent engineer for stage-wise checks.
+                    Upload your drawing and site details. When a stage is ready, an inspector is booked for that visit, fills the checks on site, and you see the report after our review.
                   </p>
                 </div>
                 <button
@@ -656,7 +656,7 @@ export default function HomeownerDashboard({
                   Add your site
                 </button>
                 <p className="text-[12px] text-slate-400 leading-relaxed">
-                  Takes about 2 minutes · Drawing PDF or image needed
+                  You’ll need a structural drawing (PDF or photo)
                 </p>
               </div>
             )}

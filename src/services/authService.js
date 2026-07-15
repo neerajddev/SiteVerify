@@ -48,6 +48,39 @@ export async function verifyPhoneOtp({ phone, token }) {
   return data;
 }
 
+/**
+ * Ensure a profiles row exists for this user.
+ * Used after phone OTP — trigger can miss role on first login.
+ */
+export async function ensureProfile({ userId, role, fullName, phone, email }) {
+  if (!supabase || !userId) return null;
+
+  const existing = await getProfile(userId);
+  if (existing) return existing;
+
+  const safeRole =
+    role === ROLES.INSPECTOR || role === ROLES.HOMEOWNER ? role : ROLES.HOMEOWNER;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert({
+      id: userId,
+      role: safeRole,
+      full_name: fullName || '',
+      phone: phone || null,
+      email: email || null,
+    })
+    .select('id, email, phone, full_name, role, created_at')
+    .maybeSingle();
+
+  if (error) {
+    // Concurrent insert / already exists
+    console.warn('[SiteVerify Auth] ensureProfile insert:', error.message);
+    return getProfile(userId);
+  }
+  return data;
+}
+
 export async function signIn({ email, password }) {
   if (!supabase) {
     throw new Error(

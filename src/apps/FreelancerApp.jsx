@@ -42,6 +42,9 @@ function FreelancerAppInner() {
   useEffect(() => {
     if (user && profile?.role === 'inspector') {
       loadData();
+    } else {
+      // Avoid infinite spinner when OTP succeeds but role/profile is not inspector yet
+      setLoading(false);
     }
   }, [user, profile]);
 

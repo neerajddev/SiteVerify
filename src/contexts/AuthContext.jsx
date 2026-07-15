@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
-import { getProfile, signOut as authSignOut } from '../services/authService';
+import { getProfile, ensureProfile, signOut as authSignOut } from '../services/authService';
 import {
   canUseDemoBypass,
   clearDemoSession,
@@ -89,15 +89,36 @@ export function AuthProvider({ children }) {
     return null;
   }, [session, demoProfile, loadProfile]);
 
-  const completeLogin = useCallback(async () => {
+  const completeLogin = useCallback(async (opts = {}) => {
     if (!supabase) return null;
-    const { data } = await supabase.auth.getSession();
-    setSession(data.session);
-    if (data.session?.user) {
-      return loadProfile(data.session.user.id);
+
+    // Prefer session returned by verifyOtp / signIn — getSession() can lag one tick.
+    let nextSession = opts.session || null;
+    if (!nextSession) {
+      const { data } = await supabase.auth.getSession();
+      nextSession = data.session;
     }
-    return null;
-  }, [loadProfile]);
+
+    setSession(nextSession);
+    if (!nextSession?.user) return null;
+
+    const userId = nextSession.user.id;
+    let data = await getProfile(userId);
+
+    if (!data) {
+      data = await ensureProfile({
+        userId,
+        role: opts.role,
+        fullName: opts.fullName || nextSession.user.user_metadata?.full_name || '',
+        phone: opts.phone || nextSession.user.phone || null,
+        email: nextSession.user.email || null,
+      });
+    }
+
+    setProfile(data);
+    setLoading(false);
+    return data;
+  }, []);
 
   const loginWithDemoBypass = useCallback((portalKey) => {
     const saved = saveDemoLogin(portalKey);
