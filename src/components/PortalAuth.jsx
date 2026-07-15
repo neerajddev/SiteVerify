@@ -534,7 +534,9 @@ export default function PortalAuth({ portal, onAuthenticated, onDemoLogin, userR
               <span className="text-4xl">{config.icon}</span>
               <h1 className="text-xl font-black text-white mt-3">{config.title}</h1>
               <p className="text-sm text-slate-400 mt-2 leading-relaxed">
-                Sign in with your phone. OTP by call or SMS.
+                {portal === 'admin'
+                  ? 'Sign in with your email and password.'
+                  : 'Sign in with your phone. OTP by call or SMS.'}
               </p>
             </>
           )}
