@@ -248,24 +248,11 @@ export default function AdminAssignTaskModal({
                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1D9E75]/40"
               >
                 <option value="">Select inspector</option>
-                {filteredInspectors.map((ins) => {
-                  const districts = inspectorDistricts(ins, projects);
-                  const inDistrict =
-                    districtFilter === 'all' ||
-                    districts.length === 0 ||
-                    districts.some((d) => d.toLowerCase() === districtFilter.toLowerCase());
-                  const phoneTail = String(ins.phone || '')
-                    .replace(/\D/g, '')
-                    .slice(-10);
-                  return (
-                    <option key={ins.id} value={ins.id}>
-                      {ins.full_name}
-                      {phoneTail ? ` · ${phoneTail}` : ''}
-                      {districts.length ? ` · ${districts.join('/')}` : ''}
-                      {!inDistrict && districtFilter !== 'all' ? ' (other district)' : ''}
-                    </option>
-                  );
-                })}
+                {filteredInspectors.map((ins) => (
+                  <option key={ins.id} value={ins.id}>
+                    {ins.full_name}
+                  </option>
+                ))}
               </select>
               {districtFilter !== 'all' && inspectorsInDistrict.length === 0 && (
                 <p className="text-[12px] text-amber-800 mt-1.5">
