@@ -23,13 +23,23 @@ function getAuthStorageKey() {
   return 'siteverify-auth';
 }
 
-export const supabase = isSupabaseConfigured
-  ? createClient(cleanUrl, cleanKey, {
+function createSupabaseClient() {
+  if (!isSupabaseConfigured) return null;
+  try {
+    return createClient(cleanUrl, cleanKey, {
       auth: {
         storageKey: getAuthStorageKey(),
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
       },
-    })
-  : null;
+    });
+  } catch (err) {
+    // A malformed URL/key (e.g. stray space in a hosting env var) must never
+    // white-screen the whole portal — fall back to unconfigured mode instead.
+    console.error('[SiteVerify] Supabase client init failed:', err);
+    return null;
+  }
+}
+
+export const supabase = createSupabaseClient();
