@@ -1,55 +1,50 @@
-const CACHE_NAME = 'siteverify-v2';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.svg'
-];
+const CACHE_NAME = 'siteverify-v3';
 
-// Install Event
+// Only pin tiny static icons — never cache HTML/JS (Vite hashes change every deploy)
+const ASSETS_TO_CACHE = ['/favicon.svg', '/manifest.json'];
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE)));
 });
 
-// Activate Event
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches.keys().then((names) =>
+      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))),
+    ).then(() => self.clients.claim()),
   );
 });
 
-// Fetch Event - Network first, falling back to cache
 self.addEventListener('fetch', (event) => {
-  // Only handle HTTP/HTTPS (exclude chrome-extension or other schemes)
-  if (!event.request.url.startsWith(self.location.origin)) {
+  const { request } = event;
+  if (!request.url.startsWith(self.location.origin)) return;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  const isHtml =
+    request.mode === 'navigate' ||
+    url.pathname.endsWith('.html') ||
+    url.pathname === '/';
+  const isBuildAsset = url.pathname.startsWith('/assets/');
+
+  // Always network for pages + built JS/CSS so deploys are not stuck on white screens
+  if (isHtml || isBuildAsset) {
+    event.respondWith(
+      fetch(request).catch(() => caches.match(request)),
+    );
     return;
   }
-  
+
   event.respondWith(
-    fetch(event.request)
+    fetch(request)
       .then((response) => {
-        // Cache the newest response
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
         return response;
       })
-      .catch(() => {
-        return caches.match(event.request);
-      })
+      .catch(() => caches.match(request)),
   );
 });
