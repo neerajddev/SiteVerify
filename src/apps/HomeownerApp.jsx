@@ -5,10 +5,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { getProjects, saveProject, seedDemoProjectIfNeeded, normalizeProjectStages } from '../services/projectService';
 import { isDemoMode } from '../data/demoAccounts';
 
+/** Only show sites owned by this homeowner — never fall back to other users' projects. */
 function filterHomeownerProjects(data, userId) {
-  if (!userId) return data;
-  const mine = data.filter((p) => !p.ownerId || p.ownerId === userId);
-  return mine.length > 0 ? mine : data;
+  if (!userId) return [];
+  return (data || []).filter((p) => p.ownerId === userId);
 }
 
 function HomeownerAppInner() {
@@ -33,6 +33,9 @@ function HomeownerAppInner() {
       } else if (mine.length > 0) {
         setActiveProjectId(mine[0].id);
         localStorage.setItem('siteverify_homeowner_active_id', mine[0].id);
+      } else {
+        setActiveProjectId('');
+        localStorage.removeItem('siteverify_homeowner_active_id');
       }
     } catch (err) {
       console.error('[SiteVerify Homeowner] Load failed:', err);
@@ -121,31 +124,21 @@ function HomeownerAppInner() {
     );
   }
 
-  const activeProject = projects.find((p) => p.id === activeProjectId) || projects[0];
+  const activeProject = projects.find((p) => p.id === activeProjectId) || projects[0] || null;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <main className="flex-1">
-        {activeProject ? (
-          <HomeownerDashboard
-            projectReport={activeProject}
-            onAddProject={handleAddProject}
-            onUpdateProjects={handleUpdateProjects}
-            projects={projects}
-            userProfile={profile}
-            activeProjectId={activeProjectId}
-            onSelectProject={handleSelectActiveProject}
-            onLogout={signOut}
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
-            <span className="text-4xl mb-3">🏠</span>
-            <h3 className="font-bold text-slate-800 text-base">No site linked yet</h3>
-            <p className="text-xs text-slate-500 mt-2 max-w-xs leading-relaxed">
-              Sign in with the demo homeowner account, or add a site after your first login. If you just updated the app, refresh the page once.
-            </p>
-          </div>
-        )}
+        <HomeownerDashboard
+          projectReport={activeProject}
+          onAddProject={handleAddProject}
+          onUpdateProjects={handleUpdateProjects}
+          projects={projects}
+          userProfile={profile}
+          activeProjectId={activeProjectId}
+          onSelectProject={handleSelectActiveProject}
+          onLogout={signOut}
+        />
       </main>
     </div>
   );

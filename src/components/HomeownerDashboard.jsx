@@ -449,7 +449,7 @@ export default function HomeownerDashboard({
     setContactSubmitted(true);
     if (onUpdateProjects && projects?.length) {
       const updated = projects.map((p) => {
-        if (p.id !== projectReport.id) return p;
+        if (p.id !== projectReport?.id) return p;
         return {
           ...p,
           historyLogs: [
@@ -497,6 +497,19 @@ export default function HomeownerDashboard({
             {/* Top bar with Settings icon */}
             <div className="flex items-center justify-between pt-1">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">SiteVerify</p>
+              <div className="flex items-center gap-2">
+                {!projectReport && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetSubmitForm();
+                      setShowSubmitModal(true);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-[#1D9E75] text-white text-[11px] font-bold"
+                  >
+                    Add site
+                  </button>
+                )}
               <button
                 type="button"
                 onClick={navigateToSettings}
@@ -513,6 +526,7 @@ export default function HomeownerDashboard({
                   </span>
                 )}
               </button>
+              </div>
             </div>
 
             {/* PWA Banner */}
@@ -538,54 +552,54 @@ export default function HomeownerDashboard({
               </div>
             )}
 
-            <HomeownerHomeCore
-              project={projectReport}
-              onOpenStage={(stageId) => navigateToStageDetail(stageId)}
-              onOpenIssue={(issue) => {
-                setActiveStageId(issue.stageId);
-                setActiveSubStageId(issue.subStageId);
-                setActiveTestId(issue.testId);
-                setView('test_detail');
-                window.scrollTo(0, 0);
-              }}
-              onOpenChat={() => {
-                setView('chat');
-                window.scrollTo(0, 0);
-              }}
-            />
+            {projectReport ? (
+              <>
+                <HomeownerHomeCore
+                  project={projectReport}
+                  onOpenStage={(stageId) => navigateToStageDetail(stageId)}
+                  onOpenIssue={(issue) => {
+                    setActiveStageId(issue.stageId);
+                    setActiveSubStageId(issue.subStageId);
+                    setActiveTestId(issue.testId);
+                    setView('test_detail');
+                    window.scrollTo(0, 0);
+                  }}
+                  onOpenChat={() => {
+                    setView('chat');
+                    window.scrollTo(0, 0);
+                  }}
+                />
 
-            <button
-              type="button"
-              onClick={() => { resetSubmitForm(); setShowSubmitModal(true); }}
-              className="w-full py-3 bg-white border border-dashed border-slate-300 text-[#085041] text-[14px] font-medium rounded-2xl cursor-pointer"
-            >
-              + Add another site
-            </button>
+                <button
+                  type="button"
+                  onClick={() => { resetSubmitForm(); setShowSubmitModal(true); }}
+                  className="w-full py-3 bg-white border border-dashed border-slate-300 text-[#085041] text-[14px] font-medium rounded-2xl cursor-pointer"
+                >
+                  + Add another site
+                </button>
 
+                {projectStatus === 'Rectification Required' && projectReport.rectificationNotes && (
+                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-rose-600 text-base">🔧</span>
+                      <span className="text-[12px] font-bold text-rose-700 uppercase tracking-wider">What needs fixing</span>
+                    </div>
+                    <p className="text-[14px] text-rose-800 leading-[1.6] font-medium">
+                      {projectReport.rectificationNotes}
+                    </p>
+                  </div>
+                )}
 
-
-            {projectStatus === 'Rectification Required' && projectReport.rectificationNotes && (
-              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-rose-600 text-base">🔧</span>
-                  <span className="text-[12px] font-bold text-rose-700 uppercase tracking-wider">What needs fixing</span>
-                </div>
-                <p className="text-[14px] text-rose-800 leading-[1.6] font-medium">
-                  {projectReport.rectificationNotes}
-                </p>
-              </div>
-            )}
-
-            {/* Quick Stats & PDF Download Button */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-bold uppercase text-[10px] tracking-wider text-slate-400">Report Summary</span>
-                <span>
-                  {reportPublished
-                    ? <>Checks passed: <strong className="text-slate-700">{passedTestsCount} of {totalTestsCount}</strong></>
-                    : <strong className="text-slate-500">Available after approval</strong>}
-                </span>
-              </div>
+                {/* Quick Stats & PDF Download Button */}
+                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span className="font-bold uppercase text-[10px] tracking-wider text-slate-400">Report Summary</span>
+                    <span>
+                      {reportPublished
+                        ? <>Checks passed: <strong className="text-slate-700">{passedTestsCount} of {totalTestsCount}</strong></>
+                        : <strong className="text-slate-500">Available after approval</strong>}
+                    </span>
+                  </div>
               
               <button
                 onClick={handleDownloadPDF}
@@ -614,6 +628,38 @@ export default function HomeownerDashboard({
                 )}
               </button>
             </div>
+              </>
+            ) : (
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 text-center space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#E8F8F2] text-[#1D9E75] flex items-center justify-center mx-auto text-2xl">
+                  🏠
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium text-[#1D9E75] uppercase tracking-wider">
+                    Welcome{userProfile?.full_name ? `, ${userProfile.full_name.split(' ')[0]}` : ''}
+                  </p>
+                  <h2 className="text-[22px] font-medium text-[#085041] mt-2 leading-tight">
+                    Add your construction site
+                  </h2>
+                  <p className="text-[14px] text-slate-500 mt-2 leading-[1.6] max-w-sm mx-auto">
+                    Upload your structural drawing and site details. SiteVerify will then assign an independent engineer for stage-wise checks.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetSubmitForm();
+                    setShowSubmitModal(true);
+                  }}
+                  className="w-full py-3.5 rounded-2xl bg-[#1D9E75] hover:bg-[#177e5e] text-white text-[15px] font-medium transition-all active:scale-[0.99]"
+                >
+                  Add your site
+                </button>
+                <p className="text-[12px] text-slate-400 leading-relaxed">
+                  Takes about 2 minutes · Drawing PDF or image needed
+                </p>
+              </div>
+            )}
             
           </div>
         )}
@@ -636,7 +682,7 @@ export default function HomeownerDashboard({
         )}
 
         {/* ── STAGE DETAIL VIEW (Sub-stage list) ───────────────────────────────── */}
-        {view === 'stage_detail' && (
+        {view === 'stage_detail' && projectReport && (
           <div className="space-y-4 animate-fadeIn max-w-[390px] mx-auto">
             <div className="flex items-center gap-3 pt-1">
               <BackButton onClick={handleStageDetailBack} label="Back to home" />
@@ -710,7 +756,7 @@ export default function HomeownerDashboard({
         )}
 
         {/* ── SUB-STAGE DETAIL VIEW (Test list) ────────────────────────────────── */}
-        {view === 'sub_stage_detail' && activeSubStage && (
+        {view === 'sub_stage_detail' && projectReport && activeSubStage && (
           <div className="space-y-4 animate-fadeIn max-w-[390px] mx-auto">
             <div className="flex items-center gap-3 pt-1">
               <BackButton onClick={handleSubStageDetailBack} label="Back to stage" />
@@ -752,7 +798,7 @@ export default function HomeownerDashboard({
         )}
 
         {/* ── TEST DETAIL VIEW ───────────────────────────────────────────────────── */}
-        {view === 'test_detail' && activeTest && activeSubStage && (
+        {view === 'test_detail' && projectReport && activeTest && activeSubStage && (
           <HomeownerTestDetail
             test={activeTest}
             stage={activeStage}
