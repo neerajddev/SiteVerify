@@ -1,0 +1,171 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+@theme {
+  --color-brand-50:  #e6f6f1;
+  --color-brand-100: #ccece3;
+  --color-brand-200: #99d9c7;
+  --color-brand-300: #66c6ab;
+  --color-brand-400: #33b28f;
+  --color-brand-500: #1D9E75; /* compliance green */
+  --color-brand-600: #177e5e;
+  --color-brand-700: #085041;
+  --color-brand-800: #0b3f2f;
+  --color-brand-900: #062018;
+  --color-sv-surface: #F8F8F6;
+  --color-sv-mint: #E1F5EE;
+
+  /* Safety Amber/Gold tones for active build */
+  --color-safety-50:  #fffbeb;
+  --color-safety-100: #fef3c7;
+  --color-safety-500: #f59e0b;
+  --color-safety-600: #d97706;
+  --color-safety-700: #b45309;
+}
+
+:root {
+  --sv-brand: #1D9E75;
+  --sv-brand-deep: #085041;
+  --sv-brand-soft: #E1F5EE;
+  --sv-amber: #F59E0B;
+  --sv-danger: #EF4444;
+  --sv-bg: #F8F8F6;
+  --sv-text: #1A1A1A;
+  --sv-muted: #64748B;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--sv-text);
+  background: var(--sv-bg);
+}
+
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Design system type utilities */
+.sv-page-title {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--sv-brand-deep);
+  line-height: 1.25;
+}
+.sv-card-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--sv-brand-deep);
+  line-height: 1.35;
+}
+.sv-body {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--sv-text);
+}
+.sv-label {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--sv-muted);
+}
+.sv-btn-primary {
+  background: var(--sv-brand);
+  color: #fff;
+  font-weight: 500;
+  border-radius: 0.75rem;
+}
+.sv-btn-primary:hover {
+  background: #177e5e;
+}
+.sv-surface-page {
+  background: var(--sv-bg);
+}
+.sv-card {
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+/* Blueprint structural grid background pattern */
+.blueprint-grid {
+  background-color: var(--sv-bg);
+  background-image: 
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: center;
+}
+
+/* Smooth scrollbar for image carousels */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+/* Custom animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+/* Stagger delays */
+.delay-1 { animation-delay: 0.06s; }
+.delay-2 { animation-delay: 0.12s; }
+.delay-3 { animation-delay: 0.18s; }
+.delay-4 { animation-delay: 0.24s; }
+.delay-5 { animation-delay: 0.30s; }
+
+/* Custom blueprint line accents */
+.blueprint-accent {
+  position: relative;
+}
+.blueprint-accent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    #cbd5e1,
+    #cbd5e1 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
